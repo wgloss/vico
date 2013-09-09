@@ -199,24 +199,28 @@
 		NSURL *baseURL = [[document fileURL] URLByDeletingLastPathComponent];
 		if ([baseURL isFileURL])
 			cwd = [baseURL path];
+
 		NSMutableDictionary *env = [NSMutableDictionary dictionary];
-		NSDictionary *info = [NSDictionary dictionaryWithObjectsAndKeys:
-			[[ViBundleCommand alloc]
-				initFromDictionary:
-							 [NSDictionary dictionaryWithObjectsAndKeys:
-									command.arg, @"name",
-									command.arg, @"command",
-									@"showashtml", @"output",
-									@"ex_bang command", @"uuid", nil]
-					      inBundle:nil], @"command",
-			[NSValue valueWithRange:NSMakeRange(NSNotFound, 0)], @"inputRange",
-			[NSValue valueWithRange:NSMakeRange(NSNotFound, 0)], @"selectedRange",
-			nil];
 		[ViBundle setupEnvironment:env
 				   forTextView:self
 				inputRange:NSMakeRange(NSNotFound, 0)
 					window:[self window]
 					bundle:nil];
+
+		NSDictionary *info =
+		  @{
+			  @"type": @"bundleCommand",
+			  @"command": [[ViBundleCommand alloc]
+							  initFromDictionary:@{
+													  @"name": command.arg,
+													  @"command": command.arg,
+													  @"output": @"showashtml",
+													  @"uuid": @"ex_bang command"
+												  }
+										inBundle:nil],
+			  @"inputRange": [NSValue valueWithRange:NSMakeRange(NSNotFound, 0)],
+			  @"selectedRange": [NSValue valueWithRange:NSMakeRange(NSNotFound, 0)]
+		  };
 		[runner launchShellCommand:command.arg
 				 withStandardInput:[[NSData alloc] init]
 					   environment:env
@@ -224,7 +228,6 @@
 			asynchronouslyInWindow:[self window]
 							 title:command.arg
 							target:self
-						  selector:@selector(bundleCommand:finishedWithStatus:contextInfo:)
 					   contextInfo:info
 							 error:&error];
 
@@ -285,7 +288,7 @@
 	[[ViRegisterManager sharedManager] setContent:pattern ofRegister:'/'];
 
 	ViTextStorage *storage = [self textStorage];
-	ViTransformer *transform = [[[ViTransformer alloc] init] autorelease];
+	ViTransformer *transform = [[ViTransformer alloc] init];
 
 	NSInteger startLocation = [storage locationForStartOfLine:exRange.location];
 	NSRange replacementRange =
